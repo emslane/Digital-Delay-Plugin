@@ -1,3 +1,6 @@
+
+//frequency analyzer to add: Voxengo SPAN
+
 /*
   ==============================================================================
 
@@ -223,8 +226,14 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
         float wetR = delayLine.popSample(1);
 
         //write wet and dry samples added together back to AudioBuffer multiplied by the current gain value
-        channelDataL[sample] = (dryL + wetL) * params.gain;
-        channelDataR[sample] = (dryR + wetR) * params.gain;
+        //I think i change these next 2 lines...
+        //channelDataL[sample] = (dryL + wetL) * params.gain;
+        //channelDataR[sample] = (dryR + wetR) * params.gain;
+        //change to:
+        float mixL = dryL + wetL * params.mix;
+        float mixR = dryR + wetR * params.mix;
+        channelDataL[sample] = mixL * params.gain;
+        channelDataR[sample] = mixR * params.gain;
     }
 
     /*float gain = params.gain;

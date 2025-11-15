@@ -29,5 +29,7 @@ private:
     // access the processor object that created it.
     DelayAudioProcessor& audioProcessor;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor)
+    juce::Slider slider;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor) //preporcessor macro
 };
