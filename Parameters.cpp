@@ -16,7 +16,7 @@ static void castParameter(juce::AudioProcessorValueTreeState& apvts, const juce:
     jassert(destination); //parameter does not exist or wrong type
     
     //castParameter(apvts, mixParamID, mixParam); //does this go here??
-    castParameter(apvts, delayTimeParamID, delayTimeParam); 
+    //castParameter(apvts, delayTimeParamID, delayTimeParam); 
 }
 
 static juce::String stringFromMilliseconds(float value, int) {
@@ -45,6 +45,7 @@ static juce::String stringFromPercent(float value, int) {
 Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts) {
     castParameter(apvts, gainParamID, gainParam);
     castParameter(apvts, delayTimeParamID, delayTimeParam);
+    castParameter(apvts, mixParamID, mixParam); //just added this line!!!!! not sure if need!
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout() {
@@ -68,8 +69,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
         mixParamID,
         "Mix",
         juce::NormalisableRange<float>(0.0f, 100.0f, 1.0f), //range of parameter is 0.0 to 100.0 in steps of 1.0
-        100.0f, //default setting (i think)
+        100.0f, //default setting (100%)
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)
+
     ));
 
     return layout;
