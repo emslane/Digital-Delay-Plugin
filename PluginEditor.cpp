@@ -14,13 +14,7 @@
 DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    //configure slider object to be rotary knob w/ text below the slider
-    //rotaryhorizontalverticaldrag - round and responds to hor and vert mouse movements but not circular motion
-    slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 16); //knob is 70x70 pix, txt box 16 pix high
-    slider.setBounds(0, 0, 70, 86); //70 wide by (70+16)=86 high
-    //above line placed slider at (0,0), changed in resized
-    addAndMakeVisible(slider); //adds slider to editor, so drawn when editor painted (makes slider child component of the editor?)
+    addAndMakeVisible(gainKnob);
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -57,6 +51,5 @@ void DelayAudioProcessorEditor::paint(juce::Graphics& g)
 
 void DelayAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    gainKnob.setTopLeftPosition(215, 120); //first num is x coord, second num is y coord
 }

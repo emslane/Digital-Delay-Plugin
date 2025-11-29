@@ -10,6 +10,8 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "Parameters.h"
+#include "RotaryKnob.h"
 
 //==============================================================================
 /**
@@ -29,7 +31,12 @@ private:
     // access the processor object that created it.
     DelayAudioProcessor& audioProcessor;
 
-    juce::Slider slider;
+    RotaryKnob gainKnob;
+
+    //create new attachment between parameter w/ identifier gainParamID and slider object slider
+    juce::AudioProcessorValueTreeState::SliderAttachment attachment{
+        audioProcessor.apvts, gainParamID.getParamID(), gainKnob.slider
+    };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor) //preporcessor macro
 };

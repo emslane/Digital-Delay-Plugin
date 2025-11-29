@@ -55,12 +55,17 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-private:
-    //==============================================================================
-
     juce::AudioProcessorValueTreeState apvts{
         *this, nullptr, "Parameters", Parameters::createParameterLayout()
     };
+
+private:
+    //==============================================================================
+
+    /*juce::AudioProcessorValueTreeState apvts{
+        *this, nullptr, "Parameters", Parameters::createParameterLayout()
+    };*/
+
     Parameters params;
 
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine; //juce::dsp::DelayLine is a class template, and needs to know the data type of the samples, and how to do the interpolation for delay lengths that fall in between samples
