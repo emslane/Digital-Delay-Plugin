@@ -31,12 +31,17 @@ private:
     // access the processor object that created it.
     DelayAudioProcessor& audioProcessor;
 
-    RotaryKnob gainKnob;
+    RotaryKnob gainKnob{ "Gain", audioProcessor.apvts, gainParamID };
+    RotaryKnob mixKnob{ "Mix", audioProcessor.apvts, mixParamID };
+    RotaryKnob delayTimeKnob{ "Time", audioProcessor.apvts, delayTimeParamID };
+
+    juce::GroupComponent delayGroup, feedbackGroup, outputGroup;
 
     //create new attachment between parameter w/ identifier gainParamID and slider object slider
-    juce::AudioProcessorValueTreeState::SliderAttachment attachment{
-        audioProcessor.apvts, gainParamID.getParamID(), gainKnob.slider
-    };
+    //juce::AudioProcessorValueTreeState::SliderAttachment attachment{
+    //    audioProcessor.apvts, gainParamID.getParamID(), gainKnob.slider
+    //};
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor) //preporcessor macro
 };

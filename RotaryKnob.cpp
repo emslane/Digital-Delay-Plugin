@@ -12,7 +12,10 @@
 #include "RotaryKnob.h"
 
 //==============================================================================
-RotaryKnob::RotaryKnob()
+RotaryKnob::RotaryKnob(const juce::String& text,
+                       juce::AudioProcessorValueTreeState& apvts,
+                       const juce::ParameterID& parameterID) :
+    attachment(apvts, parameterID.getParamID(), slider)
 {
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
@@ -25,7 +28,7 @@ RotaryKnob::RotaryKnob()
     //above line placed slider at (0,0), changed in resized
     addAndMakeVisible(slider); //adds slider to editor, so drawn when editor painted (makes slider child component of the editor?)
 
-    label.setText("Gain", juce::NotificationType::dontSendNotification); //sets text to gain on label, 
+    label.setText(text, juce::NotificationType::dontSendNotification); //sets text to text on label, 
     label.setJustificationType(juce::Justification::horizontallyCentred);
     label.setBorderSize(juce::BorderSize<int>{0, 0, 2, 0}); //puts extra 2 pixels of space between between bottom of label and top of knob
     label.attachToComponent(&slider, false); //will automatically attach self to top  of slider component
