@@ -63,7 +63,7 @@ void DelayAudioProcessorEditor::paint(juce::Graphics& g)
     g.setFont(juce::FontOptions(15.0f));
     g.drawFittedText("Wowwww look at how cooooolll!!!!!!!", getLocalBounds(), juce::Justification::centred, 1);*/
 
-    g.fillAll(juce::Colours::darkgrey);
+    g.fillAll(Colours::background);
 }
 
 void DelayAudioProcessorEditor::resized()
