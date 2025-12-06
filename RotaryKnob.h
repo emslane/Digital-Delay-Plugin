@@ -20,7 +20,7 @@ class RotaryKnob  : public juce::Component
 public:
     RotaryKnob(const juce::String& text,
                juce::AudioProcessorValueTreeState& apvts,
-               const juce::ParameterID& parameterID); //String& text for the labels for the knob ex gain
+               const juce::ParameterID& parameterID, bool draeFromMiddle = false); //String& text for the labels for the knob ex gain
     ~RotaryKnob() override;
 
     juce::Slider slider;
