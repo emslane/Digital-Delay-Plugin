@@ -41,7 +41,8 @@ private:
     //create new attachment between parameter w/ identifier gainParamID and slider object slider
     //juce::AudioProcessorValueTreeState::SliderAttachment attachment{
     //    audioProcessor.apvts, gainParamID.getParamID(), gainKnob.slider
-    //};
+
+    MainLookAndFeel mainLF;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor) //preporcessor macro

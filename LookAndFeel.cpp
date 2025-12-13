@@ -10,10 +10,29 @@
 
 #include "LookAndFeel.h"
 
+const juce::Typeface::Ptr Fonts::typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::LatoMedium_ttf, BinaryData::LatoMedium_ttfSize); //creates typeface variable
+
+juce::Font Fonts::getFont(float height) {
+    return juce::Font(typeface).withHeight(height);
+}
+
+juce::Font RotaryKnobLookAndFeel::getLabelFont([[mayble_unused]] juce::Label& label) {
+    return Fonts::getFont();
+} //if havibg issues read end of pg 261
+
 RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() { //constructor, changes the colours used to draw the labels in the rotary knob
     setColour(juce::Label::textColourId, Colours::Knob::label); //label that goes above the knob
     setColour(juce::Slider::textBoxTextColourId, Colours::Knob::label); //textbox below the knob
     setColour(juce::Slider::rotarySliderFillColourId, Colours::Knob::trackActive); //just added this
+}
+
+MainLookAndFeel::MainLookAndFeel() {
+    setColour(juce::GroupComponent::textColourId, Colours::Group::label);
+    setColour(juce::GroupComponent::outlineColourId, Colours::Group::outline);
+}
+
+juce::Font MainLookAndFeel::getLabelFont([[maybe_unused]] juce::Label& label) {
+    return Fonts::getFont();
 }
 
 //good image of all parameters below on pg 243

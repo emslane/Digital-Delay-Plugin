@@ -33,13 +33,17 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     outputGroup.addAndMakeVisible(mixKnob);
     addAndMakeVisible(outputGroup);
 
+    setLookAndFeel(&mainLF); //puts MainLookAndFeel on while editor component, child components without their own look and feel explicity set will use this one
+
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (500, 330); //sets dimensions of editor window
 }
 
+//destructor
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
 {
+    setLookAndFeel(nullptr);
 }
 
 //==============================================================================
