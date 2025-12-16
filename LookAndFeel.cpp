@@ -20,10 +20,51 @@ juce::Font RotaryKnobLookAndFeel::getLabelFont([[mayble_unused]] juce::Label& la
     return Fonts::getFont();
 } //if havibg issues read end of pg 261
 
+
+//changes the colour of the textbox below the knobs when editing the values
+class RotaryKnobLabel : public juce::Label {
+public:
+    RotaryKnobLabel() : juce::Label() {}
+
+    void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&) override {}
+    std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override {
+        return createIgnoredAccessibilityHandler(*this);
+    }
+    juce::TextEditor* createEditorComponent() override {
+        auto* ed = new juce::TextEditor(getName());
+        ed->applyFontToAllText(getLookAndFeel().getLabelFont(*this));
+        copyAllExplicitColoursTo(*ed);
+
+        ed->setBorder(juce::BorderSize<int>());
+        ed->setIndents(2, 1);
+        ed->setJustification(juce::Justification::centredTop);
+
+        ed->setPopupMenuEnabled(false); //turns off popup menu when right click on textbox
+        ed->setInputRestrictions(8); //limits the input to 8 characters max
+
+        return ed;
+    }
+};
+
+//also for changing the colour of the textbox when editing
+juce::Label* RotaryKnobLookAndFeel::createSliderTextBox(juce::Slider& slider) {
+    auto l = new RotaryKnobLabel();
+    l->setJustificationType(juce::Justification::centred);
+    l->setKeyboardType(juce::TextInputTarget::decimalKeyboard);
+    l->setColour(juce::Label::textColourId, slider.findColour(juce::Slider::textBoxTextColourId));
+    l->setColour(juce::TextEditor::textColourId, Colours::Knob::value);
+    l->setColour(juce::TextEditor::highlightedTextColourId, Colours::Knob::value);
+    l->setColour(juce::TextEditor::highlightColourId, slider.findColour(juce::Slider::rotarySliderFillColourId));
+    l->setColour(juce::TextEditor::backgroundColourId, Colours::Knob::textBoxBackground);
+    return l;
+}
+
 RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() { //constructor, changes the colours used to draw the labels in the rotary knob
     setColour(juce::Label::textColourId, Colours::Knob::label); //label that goes above the knob
     setColour(juce::Slider::textBoxTextColourId, Colours::Knob::label); //textbox below the knob
     setColour(juce::Slider::rotarySliderFillColourId, Colours::Knob::trackActive); //just added this
+    setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack); //makes the boarder around the textboxes transpartent cuz they ugly
+    setColour(juce::CaretComponent::caretColourId, Colours::Knob::caret); //caret (vertical blinking bar in textbox)
 }
 
 MainLookAndFeel::MainLookAndFeel() {
@@ -33,6 +74,12 @@ MainLookAndFeel::MainLookAndFeel() {
 
 juce::Font MainLookAndFeel::getLabelFont([[maybe_unused]] juce::Label& label) {
     return Fonts::getFont();
+}
+
+void RotaryKnobLookAndFeel::fillTextEditorBackground(
+    juce::Graphics& g, [[maybe_unused]] int width, [[maybe_unused]] int height, juce::TextEditor& textEditor) {
+    g.setColour(Colours::Knob::textBoxBackground);
+    g.fillRoundedRectangle(textEditor.getLocalBounds().reduced(4, 0).toFloat(), 4.0f);
 }
 
 //good image of all parameters below on pg 243

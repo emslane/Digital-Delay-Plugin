@@ -61,6 +61,12 @@ public:
 
     juce::Font getLabelFont(juce::Label&) override;
 
+    juce::Label* createSliderTextBox(juce::Slider&) override;
+    
+    void drawTextEditorOutline(juce::Graphics&, int, int, juce::TextEditor&) override {} //also for changing the textbox below the knobs when clicked
+
+    void fillTextEditorBackground(juce::Graphics&, int width, int height, juce::TextEditor & override);
+
 private:
     juce::DropShadow dropShadow{ Colours::Knob::dropShadow, 6, {0, 3} }; //takes the colour, radius, offset (0 pix hor 3 pix ver)
 
