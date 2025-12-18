@@ -70,5 +70,8 @@ private:
 
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine; //juce::dsp::DelayLine is a class template, and needs to know the data type of the samples, and how to do the interpolation for delay lengths that fall in between samples
 
+    float feedbackL = 0.0f;
+    float feedbackR = 0.0f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
 };

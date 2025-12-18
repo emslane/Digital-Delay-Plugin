@@ -32,9 +32,10 @@ private:
     // access the processor object that created it.
     DelayAudioProcessor& audioProcessor;
 
-    RotaryKnob gainKnob{ "Gain", audioProcessor.apvts, gainParamID, true };
+    RotaryKnob gainKnob{ "Gain", audioProcessor.apvts, gainParamID, true }; //true means start knob in the middle
     RotaryKnob mixKnob{ "Mix", audioProcessor.apvts, mixParamID };
     RotaryKnob delayTimeKnob{ "Time", audioProcessor.apvts, delayTimeParamID };
+    RotaryKnob feedbackKnob{ "Feedback", audioProcessor.apvts, feedbackParamID, true };
 
     juce::GroupComponent delayGroup, feedbackGroup, outputGroup;
 

@@ -11,6 +11,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "ProtectYourEars.h"
 
 //==============================================================================
 //DelayAudioProcessor::DelayAudioProcessor()
@@ -128,6 +129,9 @@ void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     delayLine.reset();
 
     //DBG(maxDelayInSamples);
+
+    feedbackL = 0.0f;
+    feedbackR = 0.0f;
 }
 
 void DelayAudioProcessor::releaseResources()
@@ -205,7 +209,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     float* channelDataR = buffer.getWritePointer(1);
 
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-        params.smoothen();
+        params.smoothen(); //smoothen changes to the plug-in parameters and get the current delay length
 
         float delayInSamples = params.delayTime / 1000.0f * sampleRate;
         delayLine.setDelay(delayInSamples);
@@ -215,23 +219,30 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
         float dryL = channelDataL[sample]; 
         float dryR = channelDataR[sample];
 
-        //write dryL and dryR into the delay line
+        //write dryL and dryR plus feedback into the delay line
         //left channel: index 0, right channel: index 1
-        delayLine.pushSample(0, dryL);
-        delayLine.pushSample(1, dryR);
+        delayLine.pushSample(0, dryL + feedbackL);
+        delayLine.pushSample(1, dryR + feedbackR);
         
         //read the delayed audio, once for each channel
         //wet sample values are the processed signal
-        float wetL = delayLine.popSample(0); //
+        float wetL = delayLine.popSample(0); 
         float wetR = delayLine.popSample(1);
+
+        //multiply the wet signal (output from the delay line) with the gain from params.feedback
+        feedbackL = wetL * params.feedback;
+        feedbackR = wetR * params.feedback;
 
         //write wet and dry samples added together back to AudioBuffer multiplied by the current gain value
         //I think i change these next 2 lines...
         //channelDataL[sample] = (dryL + wetL) * params.gain;
         //channelDataR[sample] = (dryR + wetR) * params.gain;
         //change to:
+        //calculating wet/dry mix
         float mixL = dryL + wetL * params.mix;
         float mixR = dryR + wetR * params.mix;
+
+        //write output samples back into juce::AudioBuffer after applying final gain
         channelDataL[sample] = mixL * params.gain;
         channelDataR[sample] = mixR * params.gain;
     }
@@ -246,6 +257,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
         }
     }*/
 
+    #if JUCE_DEBUG //only in debugging builds of the plugin
+    protectYourEars(buffer);
+    #endif
 }
 
 //==============================================================================
