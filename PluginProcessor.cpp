@@ -166,9 +166,24 @@ void DelayAudioProcessor::releaseResources()
 //}
 //#endif
 
-//replaced with:
+//replaced with: (if having problems placing pluging onto a mono track read pg 313)
 bool DelayAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
-    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
+    const auto mono = juce::AudioChannelSet::mono();
+    const auto stereo = juce::AudioChannelSet::stereo();
+    const auto mainIn = layouts.getMainInputChannelSet();
+    const auto mainOut = layouts.getMainOutputChannelSet();
+
+    if (mainIn == mono && mainOut == mono) {
+        return true;
+    }
+    if (mainIn == mono && mainOut == stereo) {
+        return true;
+    }
+    if (mainIn == stereo && mainOut == stereo) {
+        return true;
+    }
+
+    return false;
 }
 
 void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[maybe_unused]] juce::MidiBuffer& midiMessages)
@@ -205,46 +220,84 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     //set delay length
     float sampleRate = float(getSampleRate());
 
-    float* channelDataL = buffer.getWritePointer(0);
-    float* channelDataR = buffer.getWritePointer(1);
+    //replace these lines...
+    //float* channelDataL = buffer.getWritePointer(0);
+    //float* channelDataR = buffer.getWritePointer(1);
 
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-        params.smoothen(); //smoothen changes to the plug-in parameters and get the current delay length
+    //with (to deal with mono tracks)
+    auto mainInput = getBusBuffer(buffer, true, 0);
+    auto mainInputChannels = mainInput.getNumChannels();
+    auto isMainInputStereo = mainInputChannels > 1;
+    const float* inputDataL = mainInput.getReadPointer(0);
+    const float* inputDataR = mainInput.getReadPointer(isMainInputStereo ? 1 : 0); //basically if statement
 
-        float delayInSamples = params.delayTime / 1000.0f * sampleRate;
-        delayLine.setDelay(delayInSamples);
+    auto mainOutput = getBusBuffer(buffer, false, 0);
+    auto mainOutputChannels = mainOutput.getNumChannels();
+    auto isMainOutputStereo = mainOutputChannels > 1;
+    float* outputDataL = mainOutput.getWritePointer(0);
+    float* outputDataR = mainOutput.getWritePointer(isMainOutputStereo ? 1 : 0);
 
-        //read incoming audio samples into new variables
-        //dry signal is the unprocessed signal
-        float dryL = channelDataL[sample]; 
-        float dryR = channelDataR[sample];
 
-        //write dryL and dryR plus feedback into the delay line
-        //left channel: index 0, right channel: index 1
-        delayLine.pushSample(0, dryL + feedbackL);
-        delayLine.pushSample(1, dryR + feedbackR);
-        
-        //read the delayed audio, once for each channel
-        //wet sample values are the processed signal
-        float wetL = delayLine.popSample(0); 
-        float wetR = delayLine.popSample(1);
+    if (isMainOutputStereo) {
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+            params.smoothen(); //smoothen changes to the plug-in parameters and get the current delay length
 
-        //multiply the wet signal (output from the delay line) with the gain from params.feedback
-        feedbackL = wetL * params.feedback;
-        feedbackR = wetR * params.feedback;
+            float delayInSamples = params.delayTime / 1000.0f * sampleRate;
+            delayLine.setDelay(delayInSamples);
 
-        //write wet and dry samples added together back to AudioBuffer multiplied by the current gain value
-        //I think i change these next 2 lines...
-        //channelDataL[sample] = (dryL + wetL) * params.gain;
-        //channelDataR[sample] = (dryR + wetR) * params.gain;
-        //change to:
-        //calculating wet/dry mix
-        float mixL = dryL + wetL * params.mix;
-        float mixR = dryR + wetR * params.mix;
+            //read incoming audio samples into new variables
+            //dry signal is the unprocessed signal
+            float dryL = inputDataL[sample];
+            float dryR = inputDataR[sample];
 
-        //write output samples back into juce::AudioBuffer after applying final gain
-        channelDataL[sample] = mixL * params.gain;
-        channelDataR[sample] = mixR * params.gain;
+            //convert stereo to mono
+            float mono = (dryL + dryR) * 0.5f;
+
+            //write dryL and dryR plus feedback into the delay line
+            //left channel: index 0, right channel: index 1
+            //push mono sample into the delay line
+            delayLine.pushSample(0, mono * params.panL + feedbackR); //add feedback R to left channels delay line
+            delayLine.pushSample(1, mono * params.panR + feedbackL); //vice versa
+
+            //read the delayed audio, once for each channel
+            //wet sample values are the processed signal
+            float wetL = delayLine.popSample(0);
+            float wetR = delayLine.popSample(1);
+
+            //multiply the wet signal (output from the delay line) with the gain from params.feedback
+            feedbackL = wetL * params.feedback;
+            feedbackR = wetR * params.feedback;
+
+            //write wet and dry samples added together back to AudioBuffer multiplied by the current gain value
+            //I think i change these next 2 lines...
+            //channelDataL[sample] = (dryL + wetL) * params.gain;
+            //channelDataR[sample] = (dryR + wetR) * params.gain;
+            //change to:
+            //calculating wet/dry mix
+            float mixL = dryL + wetL * params.mix;
+            float mixR = dryR + wetR * params.mix;
+
+            //write output samples back into juce::AudioBuffer after applying final gain
+            outputDataL[sample] = mixL * params.gain;
+            outputDataR[sample] = mixR * params.gain;
+        }
+    }
+    else {
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+            params.smoothen();
+
+            float delayInSamples = params.minDelayTime / 1000.0f * sampleRate;
+            delayLine.setDelay(delayInSamples);
+
+            float dry = inputDataL[sample];
+            delayLine.pushSample(0, dry + feedbackL);
+
+            float wet = delayLine.popSample(0);
+            feedbackL = wet * params.feedback;
+
+            float mix = dry + wet * params.mix;
+            outputDataL[sample] = mix * params.gain;
+        }
     }
 
     /*float gain = params.gain;
