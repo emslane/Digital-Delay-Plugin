@@ -38,6 +38,9 @@ DelayAudioProcessor::DelayAudioProcessor() :
 {
     //auto* param = apvts.getParameter(gainParamID.getParamID());
     //gainParam = dynamic_cast<juce::AudioParameterFloat*>(param);
+
+    lowCutFilter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+    highCutFilter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
 }
 
 DelayAudioProcessor::~DelayAudioProcessor()
@@ -132,6 +135,15 @@ void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 
     feedbackL = 0.0f;
     feedbackR = 0.0f;
+
+    lowCutFilter.prepare(spec);
+    lowCutFilter.reset();
+
+    highCutFilter.prepare(spec);
+    highCutFilter.reset();
+
+    lastLowCut = -1.0f;
+    lastHighCut = -1.0f;
 }
 
 void DelayAudioProcessor::releaseResources()
@@ -245,6 +257,16 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             float delayInSamples = params.delayTime / 1000.0f * sampleRate;
             delayLine.setDelay(delayInSamples);
 
+
+            if (params.lowCut != lastLowCut) {
+                lowCutFilter.setCutoffFrequency(params.lowCut);
+                lastLowCut = params.lowCut;
+            }
+            if (params.highCut != lastHighCut) {
+                highCutFilter.setCutoffFrequency(params.highCut);
+                lastHighCut = params.highCut;
+            }
+
             //read incoming audio samples into new variables
             //dry signal is the unprocessed signal
             float dryL = inputDataL[sample];
@@ -265,8 +287,15 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             float wetR = delayLine.popSample(1);
 
             //multiply the wet signal (output from the delay line) with the gain from params.feedback
+            //feedbackL = wetL * params.feedback;
+            //feedbackR = wetR * params.feedback;
             feedbackL = wetL * params.feedback;
+            feedbackL = lowCutFilter.processSample(0, feedbackL);
+            feedbackL = highCutFilter.processSample(0, feedbackL);
             feedbackR = wetR * params.feedback;
+            feedbackR = lowCutFilter.processSample(1, feedbackR);
+            feedbackR = highCutFilter.processSample(1, feedbackR);
+
 
             //write wet and dry samples added together back to AudioBuffer multiplied by the current gain value
             //I think i change these next 2 lines...
@@ -289,11 +318,23 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             float delayInSamples = params.minDelayTime / 1000.0f * sampleRate;
             delayLine.setDelay(delayInSamples);
 
+            if (params.lowCut != lastLowCut) {
+                lowCutFilter.setCutoffFrequency(params.lowCut);
+                lastLowCut = params.lowCut;
+            }
+            if (params.highCut != lastHighCut) {
+                highCutFilter.setCutoffFrequency(params.highCut);
+                lastHighCut = params.highCut;
+            }
+
             float dry = inputDataL[sample];
             delayLine.pushSample(0, dry + feedbackL);
 
             float wet = delayLine.popSample(0);
+            //feedbackL = wet * params.feedback;
             feedbackL = wet * params.feedback;
+            feedbackL = lowCutFilter.processSample(0, feedbackL);
+            feedbackL = highCutFilter.processSample(0, feedbackL);
 
             float mix = dry + wet * params.mix;
             outputDataL[sample] = mix * params.gain;

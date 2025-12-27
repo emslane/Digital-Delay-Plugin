@@ -54,12 +54,34 @@ static juce::String stringFromPercent(float value, int) {
     return juce::String(int(value)) + " %";
 }
 
+static juce::String stringFromHz(float value, int) {
+    if (value < 1000.0f) {
+        return juce::String(int(value)) + " Hz";
+    }
+    else if (value < 10000.0f) {
+        return juce::String(value / 1000.0f, 2) + " k";
+    }
+    else {
+        return juce::String(value / 1000.0f, 1) + " k";
+    }
+}
+
+static float hzFromString(const juce::String& str) {
+    float value = str.getFloatValue();
+    if (value < 20.0f) {
+        return value * 1000.0f;
+    }
+    return value;
+}
+
 Parameters::Parameters(juce::AudioProcessorValueTreeState& apvts) { //constructor
     castParameter(apvts, gainParamID, gainParam);
     castParameter(apvts, delayTimeParamID, delayTimeParam);
     castParameter(apvts, mixParamID, mixParam); //just added this line!!!!! not sure if need!
     castParameter(apvts, feedbackParamID, feedbackParam);
     castParameter(apvts, stereoParamID, stereoParam);
+    castParameter(apvts, lowCutParamID, lowCutParam);
+    castParameter(apvts, highCutParamID, highCutParam);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterLayout() {
@@ -100,6 +122,24 @@ juce::AudioProcessorValueTreeState::ParameterLayout Parameters::createParameterL
         0.0f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(stringFromPercent)));
 
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        lowCutParamID,
+        "Low Cut",
+        juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.3f), //0.3 is the skew factor, gives users more presice control over low freq than high
+        20.0f,
+        juce::AudioParameterFloatAttributes()
+            .withStringFromValueFunction(stringFromHz)
+            .withValueFromStringFunction(hzFromString)));
+
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        highCutParamID,
+        "High Cut",
+        juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.3f),
+        20000.0f,
+        juce::AudioParameterFloatAttributes()
+            .withStringFromValueFunction(stringFromHz)
+            .withValueFromStringFunction(hzFromString)));
+
     return layout;
 }
 
@@ -116,6 +156,9 @@ void Parameters::update() noexcept {
     feedbackSmoother.setTargetValue(mixParam->get() * 0.01f); //mult by 0.01 is cuz on knob in ui the value is a percent ex. 50% but actually want this value to be a fraction for the processing code ex 0.5
 
     stereoSmoother.setTargetValue(stereoParam->get() * 0.01f);
+
+    lowCutSmoother.setTargetValue(lowCutParam->get());
+    highCutSmoother.setTargetValue(highCutParam->get());
 }
 
 void Parameters::prepareToPlay(double sampleRate) noexcept {
@@ -129,6 +172,9 @@ void Parameters::prepareToPlay(double sampleRate) noexcept {
     feedbackSmoother.reset(sampleRate, duration);
 
     stereoSmoother.reset(sampleRate, duration);
+
+    lowCutSmoother.reset(sampleRate, duration);
+    highCutSmoother.reset(sampleRate, duration);
 }
 
 void Parameters::reset() noexcept {
@@ -148,6 +194,12 @@ void Parameters::reset() noexcept {
     panR = 1.0f;
 
     stereoSmoother.setCurrentAndTargetValue(stereoParam->get() * 0.01f);
+
+    lowCut = 20.0f;
+    lowCutSmoother.setCurrentAndTargetValue(lowCutParam->get());
+
+    highCut = 20000.0f;
+    highCutSmoother.setCurrentAndTargetValue(highCutParam->get());
 }
 
 void Parameters::smoothen() noexcept {
@@ -160,6 +212,9 @@ void Parameters::smoothen() noexcept {
     feedback = feedbackSmoother.getNextValue();
 
     panningEqualPower(stereoSmoother.getNextValue(), panL, panR);
+
+    lowCut = lowCutSmoother.getNextValue();
+    highCut = highCutSmoother.getNextValue();
 }
 
 

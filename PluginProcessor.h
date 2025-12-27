@@ -73,5 +73,11 @@ private:
     float feedbackL = 0.0f;
     float feedbackR = 0.0f;
 
+    juce::dsp::StateVariableTPTFilter<float> lowCutFilter;
+    juce::dsp::StateVariableTPTFilter<float> highCutFilter;
+
+    float lastLowCut = -1.0f; // -1.0f means not cutoff frequency set yet
+    float lastHighCut = -1.0f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
 };
